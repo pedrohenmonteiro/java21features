@@ -1,4 +1,4 @@
-package com.pedromonteiro.java21.application;
+package com.pedromonteiro.java21.infraestructure;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
