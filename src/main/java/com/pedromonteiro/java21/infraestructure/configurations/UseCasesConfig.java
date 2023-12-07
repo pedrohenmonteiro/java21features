@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.pedromonteiro.java21.application.repositories.UserRepository;
 import com.pedromonteiro.java21.application.usecases.CreateUser;
+import com.pedromonteiro.java21.application.usecases.GetUserOfId;
 
 @Configuration
 public class UseCasesConfig {
@@ -19,4 +20,11 @@ public class UseCasesConfig {
     public CreateUser createUser() {
         return new CreateUser(userRepository);
     }
+
+    @Bean
+    public GetUserOfId getUserOfId() {
+        return new GetUserOfId(userRepository);
+    }
+
+
 }
