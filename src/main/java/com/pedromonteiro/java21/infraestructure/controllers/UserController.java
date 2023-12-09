@@ -1,13 +1,11 @@
 package com.pedromonteiro.java21.infraestructure.controllers;
 
 import java.net.URI;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.StructuredTaskScope;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,8 +27,6 @@ import com.pedromonteiro.java21.infraestructure.dtos.CreateUserInput;
 public class UserController {
 
 
-    private static final ExecutorService EXECUTOR = 
-            Executors.newVirtualThreadPerTaskExecutor();
     private final CreateUser createUser;
     private final GetUserOfId getUserOfId;
     private final ListUsers listUsers;
@@ -71,22 +67,25 @@ public class UserController {
         } else {
             var allIds = ids.split(",");
         
-            var futures = Arrays.stream(allIds)
+
+            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+             var futures = Arrays.stream(allIds)
                 .map(GetUserOfId.Input::new)
-                .map(input -> EXECUTOR.submit(() -> this.getUserOfId.execute(input)))
+                .map(input -> scope.fork(() -> this.getUserOfId.execute(input)))
                 .toList();
 
+
+        scope.join().throwIfFailed();
+
         return futures.stream()
-            .map(f -> {
-                try {
-                  return f.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                   throw new RuntimeException(ex);
-                }
-            })
+            .map(StructuredTaskScope.Subtask::get)
             .map(it -> new ListUsers.Output(it.userId(), it.email()))
             .toList();
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
         }
+            }
+           
 
     }
 
